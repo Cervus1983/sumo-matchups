@@ -1,0 +1,113 @@
+---
+title: "Grand Sumo Tournament Matchups"
+output: 
+  flexdashboard::flex_dashboard:
+    navbar:
+      - { title: "Author", href: "https://github.com/Cervus1983" }
+    source_code: embed
+runtime: shiny
+---
+
+```{r}
+# libraries + plot.basho(df)
+source("plot.basho.R")
+```
+
+```{r}
+library(httr)
+library(flexdashboard)
+library(shiny)
+```
+
+```{r}
+# rank (e.g. "Y1e") to division ("Makuuchi")
+get_division <- function(x) recode(
+	str_match(x,"^\\D+"),
+	"Y" = "Makuuchi",
+	"O" = "Makuuchi",
+	"S" = "Makuuchi",
+	"K" = "Makuuchi",
+	"M" = "Makuuchi",
+	"J" = "Juryo",
+	"Ms" = "Makushita",
+	"Sd" = "Sandanme",
+	"Jd" = "Jonidan",
+	"Jk" = "Jonokuchi",
+	"Mz" = "Mae-zumo"
+)
+```
+
+```{r}
+# fetch data from GitHub repository: Cervus1983/sumodb
+response <- GET("https://api.github.com/repos/Cervus1983/sumodb/git/trees/96fe177573c8268e263dde4ff41528450a003f4c")
+
+if(response$status_code == 200) {
+	tree <- content(response)$tree
+	path <- sapply(tree, function(x) x$path)
+	basho <- str_match(path, "([0-9]{4}\\.[0-9]{2})\\.results\\.csv")[, 2] %>% na.omit()
+}
+```
+
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+
+&nbsp;
+
+```{r}
+renderUI({
+	req(basho)
+
+	selectInput(
+		inputId = "year",
+		label =  "Year",
+		choices = basho %>% 
+			substr(1, 4) %>% 
+			unique() %>% 
+			as.integer() %>% 
+			sort(decreasing = TRUE)
+	)
+})
+```
+
+```{r}
+renderUI({
+	req(input$year)
+
+	selectInput(
+		inputId =  "month",
+		label =  "Month",
+		choices = basho %>% 
+			str_match(paste0(input$year, "\\.(\\d{2})")) %>% 
+			.[, 2] %>% 
+			na.omit() %>% 
+			as.integer() %>% 
+			month.name[.]
+	)
+})
+```
+
+
+Column
+-----------------------------------------------------------------------
+
+```{r}
+output$plot <- renderPlotly({
+	req(input$year, input$month)
+	
+	read_csv(
+		sprintf(
+			"https://raw.githubusercontent.com/Cervus1983/sumodb/all-divisions/CSV/%s.%02d.results.csv",
+			input$year,
+			which(month.name == input$month)
+		)
+	) %>% 
+		# only  Makuuchi (top division)
+		filter(get_division(rank1) == "Makuuchi" | get_division(rank2) == "Makuuchi") %>% 
+		plot.basho()
+})
+```
+
+```{r}
+plotlyOutput("plot", height = "100%")
+```
