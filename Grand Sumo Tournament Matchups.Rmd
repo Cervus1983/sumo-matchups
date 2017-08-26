@@ -88,17 +88,17 @@ data <- reactive({
 		"https://raw.githubusercontent.com/Cervus1983/sumodb/all-divisions/CSV/%s.results.csv",
 		input$year_month
 	) %>% 
-	read_csv() %>% 
-	# Makuuchi (top division)
-	filter(get_division(rank1) == "Makuuchi" | get_division(rank2) == "Makuuchi") %>% 
-	# pertinent columns
-	select(basho, day, shikona1, rank1, win1, kimarite, win2, shikona2, rank2)
+		read_csv() %>% 
+		# Makuuchi (top division)
+		filter(get_division(rank1) == "Makuuchi" | get_division(rank2) == "Makuuchi") %>% 
+		# pertinent columns
+		select(basho, day, shikona1, rank1, win1, kimarite, win2, shikona2, rank2)
 })
 ```
 
 ```{r}
 output$link <- downloadHandler(
-	filename = paste(input$year_month, "csv", sep = "."),
+	filename = function() paste(input$year_month, "csv", sep = "."),
 	content = function(filename) write_csv(data(), filename)
 )
 ```
