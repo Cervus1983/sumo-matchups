@@ -59,30 +59,61 @@ renderUI({
 	req(basho)
 
 	selectInput(
-		inputId = "year",
-		label =  "Year",
+		inputId = "year_month",
+		label =  NULL,
 		choices = basho %>% 
-			substr(1, 4) %>% 
-			unique() %>% 
-			as.integer() %>% 
-			sort(decreasing = TRUE)
+			set_names(
+				paste(
+					basho %>% substr(1, 4),
+					basho %>% substr(6, 7) %>% as.integer() %>% month.name[.]
+				)
+			) %>% rev()
 	)
 })
 ```
 
+15 days of [Honbasho](https://en.wikipedia.org/wiki/Honbasho).<br>Only [makuuchi](https://en.wikipedia.org/wiki/Makuuchi).
+
+Last day in the bottom-right corner. Playoff (e.g. in 2017 March) shown as day 16.
+
+Bouts shown as vertical lines, left to right in the running order.
+
+Line ends represent [rikishi](https://en.wikipedia.org/wiki/Rikishi).<br>Higher dot --- higher rank.<br>Big dot --- winner.
+
+```{r}
+data <- reactive({
+	req(input$year_month)
+	
+	sprintf(
+		"https://raw.githubusercontent.com/Cervus1983/sumodb/all-divisions/CSV/%s.results.csv",
+		input$year_month
+	) %>% 
+	read_csv() %>% 
+	# Makuuchi (top division)
+	filter(get_division(rank1) == "Makuuchi" | get_division(rank2) == "Makuuchi") %>% 
+	# pertinent columns
+	select(basho, day, shikona1, rank1, win1, kimarite, win2, shikona2, rank2)
+})
+```
+
+```{r}
+output$link <- downloadHandler(
+	filename = paste(input$year_month, "csv", sep = "."),
+	content = function(filename) write_csv(data(), filename)
+)
+```
+
+&nbsp;
+
+Download data:
+
 ```{r}
 renderUI({
-	req(input$year)
-
-	selectInput(
-		inputId =  "month",
-		label =  "Month",
-		choices = basho %>% 
-			str_match(paste0(input$year, "\\.(\\d{2})")) %>% 
-			.[, 2] %>% 
-			na.omit() %>% 
-			as.integer() %>% 
-			month.name[.]
+	req(data())
+	
+	downloadLink(
+		outputId = "link",
+		label = paste(input$year_month, "csv", sep = ".")
 	)
 })
 ```
@@ -93,18 +124,9 @@ Column
 
 ```{r}
 output$plot <- renderPlotly({
-	req(input$year, input$month)
+	req(data())
 	
-	read_csv(
-		sprintf(
-			"https://raw.githubusercontent.com/Cervus1983/sumodb/all-divisions/CSV/%s.%02d.results.csv",
-			input$year,
-			which(month.name == input$month)
-		)
-	) %>% 
-		# only  Makuuchi (top division)
-		filter(get_division(rank1) == "Makuuchi" | get_division(rank2) == "Makuuchi") %>% 
-		plot.basho()
+	plot.basho(data())
 })
 ```
 

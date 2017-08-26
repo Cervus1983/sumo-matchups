@@ -3,12 +3,12 @@ library(stringr)
 library(tidyverse)
 
 # level.rank.group
-as.rank <- function(s) sprintf(
-	"%s.%02d.%s",
+as.rank <- function(s) as.integer(sprintf(
+	"%d%02d%d",
 	match(substr(s, 1, 1), c("Y", "O", "S", "K", "M", "J")),
 	as.integer(str_match(s, "^\\D([0-9]+)\\D")[, 2]),
 	match(substr(s, nchar(s), nchar(s)), c("e", "w"))
-)
+))
 
 # plot one basho (tournament)
 plot.basho <- function(df) {
@@ -78,7 +78,6 @@ plot.basho <- function(df) {
 					range = c(min((df %>% filter(day == d))$index) - 0.5, max((df %>% filter(day == d))$index) + 0.5),
 					showgrid = FALSE,
 					showticklabels = FALSE
-					#title = paste("day", d)
 				),
 				yaxis = list(
 					autorange = "reversed",
@@ -95,10 +94,12 @@ plot.basho <- function(df) {
 	subplot(p, nrows = rows, shareY = TRUE) %>% 
 		layout(
 			annotations = list(
-				showarrow = FALSE,
-				text = "First day",
-				x = 1, xanchor = "left",
-				y = 1
+				list(
+					showarrow = FALSE,
+					text = "First day",
+					x = 1, xanchor = "left",
+					y = 1
+				)
 			)
 		)
 }
