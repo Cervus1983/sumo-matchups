@@ -87,8 +87,21 @@ plot.basho <- function(df) {
 					title = "",
 					zeroline = FALSE
 				)
-			)# %>% config(displayModeBar = FALSE)
-			# https://github.com/ropensci/plotly/issues/746
+			) %>% 
+			plotly::config(
+				collaborate = FALSE,
+				displaylogo = FALSE,
+				modeBarButtonsToRemove = c(
+					"autoScale2d",
+					"hoverClosestCartesian",
+					"hoverCompareCartesian",
+					"lasso2d",
+					"select2d",
+					"toggleSpikelines",
+					"zoomIn2d",
+					"zoomOut2d"
+				)
+			)
 	}
 
 	subplot(p, nrows = rows, shareY = TRUE) %>% 
