@@ -5,9 +5,12 @@ library(tidyverse)
 # level.rank.group
 as.rank <- function(s) as.integer(sprintf(
 	"%d%02d%d",
-	match(substr(s, 1, 1), c("Y", "O", "S", "K", "M", "J")),
-	as.integer(str_match(s, "^\\D([0-9]+)\\D")[, 2]),
-	match(substr(s, nchar(s), nchar(s)), c("e", "w"))
+	match(
+		str_extract(s, "^\\D+"),
+		c("Y", "O", "S", "K", "M", "Bg", "J", "Ms", "Sd", "Jd", "Jk")
+	),
+	as.integer(str_match(s, "^\\D(\\d+)")[, 2]),
+	match(str_match(s, "^\\D+\\d+([ew])")[, 2], c("e", "w"))
 ))
 
 # plot one basho (tournament)
