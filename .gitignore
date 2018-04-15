@@ -1,4 +1,5 @@
 *.csv
+*.Rproj
 .RData
 .Renviron
 .Rhistory
