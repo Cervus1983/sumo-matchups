@@ -1,3 +1,5 @@
+*.csv
 .RData
+.Renviron
 .Rhistory
 .Rproj.user

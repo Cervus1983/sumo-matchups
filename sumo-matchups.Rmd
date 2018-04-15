@@ -20,6 +20,13 @@ library(shiny)
 ```
 
 ```{r}
+all_data <- "data.csv" %>% 
+	read_csv() %>% 
+	# remove 'mirror' records
+	filter(rikishi1_id < rikishi2_id)
+```
+
+```{r}
 # rank (e.g. "Y1e") to division ("Makuuchi")
 get_division <- function(x) recode(
 	str_match(x,"^\\D+"),
@@ -37,18 +44,6 @@ get_division <- function(x) recode(
 )
 ```
 
-```{r}
-# fetch data from GitHub repository: Cervus1983/sumodb
-response <- GET("https://api.github.com/repos/Cervus1983/sumodb/git/trees/96fe177573c8268e263dde4ff41528450a003f4c")
-
-if(response$status_code == 200) {
-	tree <- content(response)$tree
-	path <- sapply(tree, function(x) x$path)
-	basho <- str_match(path, "([0-9]{4}\\.[0-9]{2})\\.results\\.csv")[, 2] %>% na.omit()
-}
-```
-
-
 Column {.sidebar}
 -----------------------------------------------------------------------
 
@@ -56,8 +51,10 @@ Column {.sidebar}
 
 ```{r}
 renderUI({
-	req(basho)
-
+	basho <- all_data %>% 
+		pull(basho) %>% 
+		unique()
+	
 	selectInput(
 		inputId = "year_month",
 		label =  NULL,
@@ -67,7 +64,8 @@ renderUI({
 					basho %>% substr(1, 4),
 					basho %>% substr(6, 7) %>% as.integer() %>% month.name[.]
 				)
-			) %>% rev()
+			) %>% 
+			rev()
 	)
 })
 ```
@@ -84,15 +82,15 @@ Line ends represent [rikishi](https://en.wikipedia.org/wiki/Rikishi).<br>Higher 
 data <- reactive({
 	req(input$year_month)
 	
-	sprintf(
-		"https://raw.githubusercontent.com/Cervus1983/sumodb/all-divisions/CSV/%s.results.csv",
-		input$year_month
-	) %>% 
-		read_csv() %>% 
-		# Makuuchi (top division)
-		filter(get_division(rank1) == "Makuuchi" | get_division(rank2) == "Makuuchi") %>% 
+	all_data %>% 
+		filter(
+			# selected basho
+			basho == input$year_month,
+			# makuuchi
+			get_division(rikishi1_rank) == "Makuuchi" | get_division(rikishi2_rank) == "Makuuchi"
+		) %>% 
 		# pertinent columns
-		select(basho, day, shikona1, rank1, win1, kimarite, win2, shikona2, rank2)
+		select(basho, day, rikishi1_shikona, rikishi1_rank, rikishi1_win, kimarite, rikishi2_win, rikishi2_shikona, rikishi2_rank)
 })
 ```
 

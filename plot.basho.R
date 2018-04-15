@@ -18,7 +18,7 @@ plot.basho <- function(df) {
 	scale <- do.call(
 		rbind,
 		lapply(
-			unique(c(df$rank1, df$rank2)),
+			unique(c(df$rikishi1_rank, df$rikishi2_rank)),
 			function(x) data.frame(rank = x, code = as.rank(x))
 		)
 	) %>% arrange(code)
@@ -29,9 +29,9 @@ plot.basho <- function(df) {
 	df <- merge(
 		merge(
 			df,
-			scale %>% rename(rank1 = rank)
+			scale %>% rename(rikishi1_rank = rank)
 		) %>% select(-code, y1 = y),
-		scale %>% rename(rank2 = rank)
+		scale %>% rename(rikishi2_rank = rank)
 	) %>% select(-code, y2 = y)
 	
 	# one subplot for each day of the tournament
@@ -60,15 +60,15 @@ plot.basho <- function(df) {
 				x = ~index, y = ~y1,
 				color = I("black"),
 				hoverinfo = "text",
-				marker = list(size = ~win1 * 2 + 2),
-				text = ~paste(shikona1, rank1)
+				marker = list(size = ~rikishi1_win * 2 + 2),
+				text = ~paste(rikishi1_shikona, rikishi1_rank)
 			) %>% 
 			add_markers(
 				x = ~index, y = ~y2,
 				color = I("black"),
 				hoverinfo = "text",
-				marker = list(size = ~win2 * 2 + 2),
-				text = ~paste(shikona2, rank2)
+				marker = list(size = ~rikishi2_win * 2 + 2),
+				text = ~paste(rikishi2_shikona, rikishi2_rank)
 			) %>% 
 			layout(
 				hovermode = "x",
